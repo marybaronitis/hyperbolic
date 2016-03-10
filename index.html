@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+
+<head>
+  <title>MATH 101 Project Baronitis</title>
+  <meta charset="UTF-8">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/2.7.0/math.min.js"></script>
+</head>
+
+<script>
+  var startingPointi = math.complex(0.5, Math.sqrt(3) / 2);
+  var rhoi = math.complex();
+  var currenti = startingPointi;
+  var nextPointi = math.complex();
+  var mapCanvas, mapCtx, wallpaperCanvas, wallpaperCtx;
+  var numRotations = 0;
+  var rhoOrder = [];
+  var color;
+  var fadedWallpaper = false;
+
+  function getWallpaper() {
+    var fileLocation = 'wallpaper.jpg';
+
+    // create wallpaper canvas
+    wallpaperCanvas = document.getElementById('canvas');
+    wallpaperCtx = document.getElementById('canvas').getContext('2d');
+    wallpaperCtx.clearRect(0, 0, canvas.width, canvas.height);
+    wallpaperCtx.globalAlpha = 0.3
+
+    // create map canvas
+    mapCanvas = wallpaperCanvas;
+    mapCtx = wallpaperCtx;
+    mapCtx.clearRect(0, 0, mapCanvas.width, mapCanvas.height);
+
+    // print wallpaper
+    var wallpaper = document.createElement("IMG");
+    wallpaper.onload = function() {;
+      wallpaperCtx.drawImage(wallpaper, 0, 0);
+    }
+    wallpaper.src = fileLocation;
+  }
+
+  function getRandomRoh(override) {
+    override = override || 0;
+    var pixCur = convertPointToPixels(currenti);
+    var temp = pixCur.im;
+    if (override) {
+      var rho = override;
+    } else {
+      var rho = Math.floor((Math.random() * 3) + 1);
+    }
+    document.getElementById("rho").innerHTML = "&#120588;: " + rho;
+    document.getElementById("rho").innerHTML = "&#120588; so far: " + rhoOrder;
+
+    rhoOrder.push(rho);
+
+    drawPath();
+  }
+
+  function drawPath() {
+    nextPointi = calculateNextPoint();
+
+    // points are in a vertical path
+    if (math.re(currenti).toPrecision(8) - math.re(nextPointi).toPrecision(8) == 0) {
+      //draw vertical line between them
+      var pixelCurrenti = convertPointToPixels(currenti);
+      var pixelNextPointi = convertPointToPixels(nextPointi);
+
+      mapCtx.beginPath();
+      mapCtx.moveTo(pixelCurrenti[0], pixelCurrenti[1]);
+      mapCtx.lineTo(pixelNextPointi[0], pixelNextPointi[1]);
+      mapCtx.lineWidth = 3;
+      mapCtx.strokeStyle = color;
+      mapCtx.stroke();
+    }
+    // points are not on a vertical path
+    else {
+      var circleCenter = math.complex();
+
+      // points are on a horizontal path
+      if (math.im(currenti).toPrecision(8) == math.im(nextPointi).toPrecision(8)) {
+        var real = (math.re(currenti) + math.re(nextPointi)) / 2;
+        var imaginary = 0;
+
+        circleCenter = math.complex(real, imaginary);
+      }
+      //points are on a diagonal path
+      else {
+        circleCenter = findCircleCenter(currenti, nextPointi);
+      }
+
+      var pixelRadiusTerminus = convertPointToPixels(currenti);
+      var pixelOrigin = convertPointToPixels(circleCenter);
+
+      var pixelRadius = distance(pixelOrigin[0], pixelOrigin[1], pixelRadiusTerminus[0], pixelRadiusTerminus[1]);
+      var pixelCircleCenter = convertPointToPixels(circleCenter);
+
+      var angles;
+      angles = findAngles(currenti, nextPointi, circleCenter);
+
+      mapCtx.beginPath();
+      mapCtx.arc(pixelCircleCenter[0], pixelCircleCenter[1], pixelRadius, angles[0], angles[1]);
+      mapCtx.strokeStyle = color;
+      mapCtx.lineWidth = 3;
+      mapCtx.stroke();
+    }
+
+    currenti = nextPointi;
+  }
+
+  function convertPointToPixels(pt) {
+    var imageHeight = 924;
+    var scale = 362;
+    var xAxisOffset = 359;
+    x = (scale * math.re(pt)) + xAxisOffset;
+    y = imageHeight - (scale * math.im(pt));
+    return [x, y];
+  }
+
+  function calculateNextPoint() {
+    var pt = startingPointi;
+
+    // makes a copy of rhoOrder
+    var reversedRohOrder = rhoOrder.slice();
+
+    // reverses the copy
+    reversedRohOrder.reverse();
+
+    // composes rho functions by interating through reversedRohOrder
+    reversedRohOrder.forEach(function(rhoj) {
+      if (rhoj === 1) {
+        pt = rho1Rotated(pt);
+      } else if (rhoj === 2) {
+        pt = rho2Rotated(pt);
+      } else if (rhoj === 3) {
+        pt = rho3Rotated(pt);
+      }
+    });
+
+    return pt;
+  }
+
+  // creates point from rotation about rho1
+  function rho1Rotated(z) {
+    rhoi = math.complex(0, 1);
+    z = math.multiply(z, -1);
+    z = math.pow(z, -1);
+
+    return z;
+  }
+
+  function rho2Rotated(z) {
+    var num = math.add(z, -2);
+    var den = math.add(z, -1);
+    z = math.divide(num, den);
+
+    return z;
+  }
+
+  function rho3Rotated(z) {
+    var zPrime = math.multiply(z, -1);
+    var num = math.add(1, zPrime);
+    zPrime = math.multiply(zPrime, 2);
+    var den = math.add(1, zPrime);
+    z = math.divide(num, den);
+
+    return z;
+  }
+
+  function rhoOmegaRotated(z) {
+    var num = math.add(z, -1);
+    z = math.divide(num, z);
+    return z;
+  }
+
+  // returns [x, y]
+  function midpoint(p1, p2) {
+    var num = (math.re(p1) + math.re(p2)) / 2;
+    var den = (math.im(p1) + math.im(p2)) / 2;
+
+    return math.complex(num, den);
+  }
+
+  // returns int
+  function getIntercept(m, p1) {
+    return -m * math.re(p1) + math.im(p1);
+  }
+
+  // returns [m, b]
+  function getEquation(p1, p2) {
+    var m = (math.im(p2) - math.im(p1)) / (math.re(p2) - math.re(p1));
+    var b = getIntercept(m, p1);
+
+    return [m, b];
+  }
+
+  // returns [m, b]
+  function perpendicularBisector(p1, p2) {
+    var lineMid = midpoint(p1, p2);
+    var equation = getEquation(p1, p2);
+    var reciprocalSlope = -1 / equation[0];
+    var perpIntercept = getIntercept(reciprocalSlope, lineMid);
+
+    return [reciprocalSlope, perpIntercept];
+  }
+
+  function findCircleCenter(p1, p2) {
+    var chordAB = perpendicularBisector(p1, p2);
+    var circleCenter = findIntersection(chordAB[0], chordAB[1], 0, 0);
+
+    return circleCenter;
+  }
+
+  // returns [x, y]
+  function findIntersection(m1, b1, m2, b2) {
+    // solve for x
+    var xpt, ypt;
+
+    if (Math.max(m1, m2) === m1) {
+      xpt = (b2 - b1) / (m1 - m2);
+    } else {
+      xpt = (b1 - b2) / (m2 - m1);
+    }
+
+    ypt = (m1 * xpt) + b1;
+    return math.complex(xpt, ypt);
+  }
+
+  function distance(x1, y1, x2, y2) {
+    return Math.abs(Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2)));
+  }
+
+  function findAngles(p1, p2, center) {
+    // angle alpha corresponds to point A = p1
+    // angle beta corresponds to point B = p2
+
+    var centerToP1 = Math.abs(center.re - p1.re);
+    var centerToP2 = Math.abs(center.re - p2.re);
+
+    var radius = distance(p1.re, p1.im, center.re, center.im);
+
+    var alpha = Math.atan(p1.im/centerToP1);
+    var beta = Math.atan(p2.im/centerToP2);
+
+    // the following cases represent the different arrangements of two points on a circle in relation to the center
+    // right of the center
+    if(p1.re > center.re && p2.re > center.re) {
+      if(alpha < beta) {
+        return [2*Math.PI - beta, 2*Math.PI - alpha];
+      }
+      else {
+        return [2*Math.PI - alpha, 2*Math.PI - beta];
+      }
+    }
+
+    // left of the center
+    else if (p1.re < center.re && p2.re < center.re) {
+      if (alpha < beta) {
+        return [Math.PI + alpha, Math.PI + beta];
+      }
+      else {
+        return [Math.PI + beta, Math.PI + alpha];
+      }
+    }
+
+    // point form a horizontal line
+    else if (p1.im.toPrecision(8) == p2.im.toPrecision(8)) {
+      return [4*Math.PI / 3, 5*Math.PI / 3];
+    }
+
+    // points on both sides of center - case 1
+    else if (p1.re < center.re && p2.re > center.re) {
+      if (alpha < beta) {
+        return [Math.PI + beta, 2*Math.PI - alpha];
+      }
+      else {
+        return [Math.PI + alpha, 2*Math.PI - beta];
+      }
+    }
+
+    // points on both sides of center - case 2
+    else if (p1.re > center.re && p2.re < center.re) {
+      if (alpha < beta) {
+        return [Math.PI + alpha, 2*Math.PI - beta];
+      }
+      else {
+        return [Math.PI + beta, 2*Math.PI - alpha];
+      }
+    }
+
+    // used for debugging purposes - will never be called
+    else {
+      console.log("YOU HAVE A PROBLEM");
+      return [0, 2*Math.PI];
+    }
+  }
+
+  function run20Steps() {
+    for(var i = 0; i < 20; i++) {
+      getRandomRoh();
+    }
+  }
+
+  function getRandomColor() {
+    var letters = '0123456789ABCDEF'.split('');
+    var newColor = '#';
+    for (var i = 0; i < 6; i++ ) {
+        newColor += letters[Math.floor(Math.random() * 16)];
+    }
+    return newColor;
+  }
+
+  function generateCompositeImage() {
+    for(var i = 0; i < 100;  i++) {
+      color = getRandomColor();
+      run20Steps();
+
+      // restart a new path
+      // set starting point
+      currenti = startingPointi;
+
+      // clear previous rhos
+      while(rhoOrder.length > 0) {
+        rhoOrder.pop();
+      }
+    }
+  }
+
+  function toggleOpacity() {
+    mapCtx.save();
+    if(fadedWallpaper === false) {
+      wallpaperCtx.globalAlpha = 0.3;
+    }
+    else {
+      wallpaperCtx.globalAlpha = 1;
+    }
+    console.log("hit");
+    mapCtx.restore();
+    getWallpaper();
+
+  }
+
+
+  document.addEventListener("DOMContentLoaded", function(event) {
+    getWallpaper();
+  });
+
+  function writeMessage(canvas, message) {
+    var context = canvas.getContext('2d');
+    context.clearRect(0, 0, 400, 50);
+    context.font = '12pt Calibri';
+    context.fillStyle = 'black';
+    context.fillText(message, 10, 25);
+  }
+
+  function getMousePos(canvas, event) {
+    var rect = canvas.getBoundingClientRect();
+    return {
+      x: Math.floor(event.clientX - rect.left),
+      y: Math.floor(event.clientY - rect.top)
+    };
+  }
+
+  document.addEventListener('mousemove', function(event) {
+    var mousePos = getMousePos(mapCanvas, event);
+    var messageInPixels = 'Mouse position: ' + mousePos.x + ',' + mousePos.y;
+
+    writeMessage(mapCanvas, messageInPixels);
+
+  }, false);
+</script>
+
+<body>
+  <!-- <div id="controlsContainer">
+    <input placeholder='Please enter file name' id='filename' value='wallpaper.jpg'>
+    <button id='process' onClick='getWallpaper();' button style='background-color:tan'>Print wallpaper</button>
+  </div> -->
+  <button id='tossDie' onClick='getRandomRoh();' button style='background-color:cyan'>Toss 4-Sided Die</button>
+  <p id="rho"></p>
+  <p id='rhoOrder'></p>
+  <button id='composite' onClick='generateCompositeImage();' button style='background-color:yellow'>Chaos</button>
+  <button id='opacityControl' onclick="toggleOpacity();" button style='background-color:red'>Toggle Opacity of Wallpaper</button>
+  <hr>
+
+  <canvas id="canvas" width="1443" height="924"></canvas>
+
+</body>
+
+</html>
