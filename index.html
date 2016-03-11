@@ -30,6 +30,7 @@
     mapCanvas = wallpaperCanvas;
     mapCtx = wallpaperCtx;
     mapCtx.clearRect(0, 0, mapCanvas.width, mapCanvas.height);
+    mapCtx.globalAlpha = 1;
 
     // print wallpaper
     var wallpaper = document.createElement("IMG");
