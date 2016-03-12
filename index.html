@@ -49,10 +49,11 @@
     } else {
       var rho = Math.floor((Math.random() * 3) + 1);
     }
-    document.getElementById("rho").innerHTML = "&#120588;: " + rho;
-    document.getElementById("rho").innerHTML = "&#120588; so far: " + rhoOrder;
 
     rhoOrder.push(rho);
+
+    document.getElementById("rho").innerHTML = "&#120588;: " + rho;
+    document.getElementById("rho").innerHTML = "&#120588; so far: " + rhoOrder;
 
     drawPath();
   }
