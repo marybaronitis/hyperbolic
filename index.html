@@ -17,9 +17,9 @@
   var color = 'black';
   var fadedWallpaper = false;
 
-  function getWallpaper() {
-    var fileLocation = 'wallpaper.jpg';
+  var fileLocation = 'wallpaper.jpg';
 
+  function getWallpaper() {
     // create wallpaper canvas
     wallpaperCanvas = document.getElementById('canvas');
     wallpaperCtx = document.getElementById('canvas').getContext('2d');
@@ -315,30 +315,44 @@
     for(var i = 0; i < 100;  i++) {
       color = getRandomColor();
       run20Steps();
-
-      // restart a new path
-      // set starting point
-      currenti = startingPointi;
-
-      // clear previous rhos
-      while(rhoOrder.length > 0) {
-        rhoOrder.pop();
-      }
+      clearRhoOrder();
     }
+  }
+
+  function clearRhoOrder() {
+    // restart a new path
+    // set starting point
+    currenti = startingPointi;
+
+    // clear previous rhos
+    while(rhoOrder.length > 0) {
+      rhoOrder.pop();
+    }
+  }
+
+  function changeColor() {
+    color = getRandomColor();
   }
 
   // not yet working
   // function toggleOpacity() {
+  //   var paths = mapCanvas.toDataURL();
+  //
+  //   document.getElementById('canvasImg').src = paths;
   //   mapCtx.save();
   //   if(fadedWallpaper === false) {
-  //     wallpaperCtx.globalAlpha = 0.3;
+  //     fileLocation = 'wallpaperOpaque';
   //   }
   //   else {
-  //     wallpaperCtx.globalAlpha = 1;
+  //     fileLocation = 'wallpaper';
   //   }
-  //   console.log("hit");
-  //   mapCtx.restore();
   //   getWallpaper();
+  //
+  //   var newMap = document.createElement("canvasImg");
+  //   newMap.onload = function() {;
+  //     mapCtx.drawImage(paths, 0, 0);
+  //   }
+  //   newMap.src = paths;
   //
   // }
 
@@ -388,10 +402,12 @@
     <input placeholder='Please enter file name' id='filename' value='wallpaper.jpg'>
     <button id='process' onClick='getWallpaper();' button style='background-color:tan'>Print wallpaper</button>
   </div> -->
-  <button id='tossDie' onClick='getRandomRho();' button style='background-color:cyan'>Toss 4-Sided Die</button>
-  <button id='composite' onClick='run20Steps();' button style='background-color:yellow'>Plot a Path of 20</button>
+  <button id='random' onClick='getRandomRho();' button style='background-color:cyan'>Get Random &#120588;</button>
+  <button id='20steps' onClick='run20Steps();' button style='background-color:yellow'>Plot a Path of 20</button>
   <button id='composite' onClick='generateCompositeImage();' button style='background-color:orange'>Generate Composite Image</button>
-  <!--<button id='opacityControl' onclick="toggleOpacity();" button style='background-color:red'>Toggle Opacity of Wallpaper</button> -->
+  <button id='restart' onClick='clearRhoOrder();' button style='background-color:green'>Back to Beginning</button>
+  <button id='changeColor' onClick='changeColor();' button style='background-color:magenta'>Change Color</button>
+  <!--<button id='opacityControl' onclick="toggleOpacity();" button style='background-color:red'>Toggle Opacity of Wallpaper</button>-->
 
   <p id="rho"></p>
   <p id='rhoOrder'></p>
